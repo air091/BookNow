@@ -1,7 +1,7 @@
 require("dotenv/config");
 const { Pool } = require("pg");
 
-const databaseConnection = new Pool({
+const pool = new Pool({
   host: process.env.PG_HOST,
   port: Number(process.env.PG_PORT) || 5432,
   user: process.env.PG_USERNAME,
@@ -12,7 +12,7 @@ const databaseConnection = new Pool({
   connectionTimeoutMillis: 2000,
 });
 
-databaseConnection
+pool
   .query("SELECT 1")
   .then(() => console.log("PosgreSQL connected"))
   .catch((err) => {
@@ -20,4 +20,4 @@ databaseConnection
     process.exit(1);
   });
 
-module.exports = databaseConnection;
+module.exports = pool;
