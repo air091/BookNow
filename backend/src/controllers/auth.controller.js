@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const { insertUser, selectUserByEmail } = require("../models/user.model");
+const { generateToken } = require("../utils/generateToken");
 
 const register = async (request, response) => {
   try {
@@ -13,6 +14,7 @@ const register = async (request, response) => {
     const hashPassword = await bcrypt.hash(password, salt);
 
     const user = await insertUser(name, email, role, hashPassword);
+    await generateToken(user.id, response);
     return response.status(201).json({ status: true, user });
   } catch (err) {
     console.log(`Register failed ${err}`);
@@ -39,6 +41,7 @@ const login = async (request, response) => {
       return response
         .status(401)
         .json({ status: false, message: "Email or password is incorrect" });
+    await generateToken(user.id, response);
     return response
       .status(200)
       .json({ status: true, message: "User logged in successfully", user });
