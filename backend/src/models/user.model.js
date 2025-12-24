@@ -3,7 +3,7 @@ const pool = require("../config/db");
 const selectAllUsers = async () => {
   const selectQuery = `SELECT * FROM users`;
   try {
-    const result = await pool(selectAllUsers);
+    const result = await pool(selectQuery);
     return result.rows;
   } catch (err) {
     console.error("Select all users model failed");
@@ -14,7 +14,18 @@ const selectAllUsers = async () => {
 const selectUserById = async (userId) => {
   const selectQuery = `SELECT id, name, email, role FROM USERS WHERE id = $1`;
   try {
-    const result = await pool.query(selectQuery);
+    const result = await pool.query(selectQuery, [userId]);
+    return result.rows[0];
+  } catch (err) {
+    console.error("Select user by id failed");
+    throw err;
+  }
+};
+
+const selectUserByEmail = async (userEmail) => {
+  const selectQuery = `SELECT id, name, email, role FROM USERS WHERE email = $1`;
+  try {
+    const result = await pool.query(selectQuery, [userEmail]);
     return result.rows[0];
   } catch (err) {
     console.error("Select user by id failed");
@@ -99,6 +110,7 @@ const deleteUser = async (userId) => {
 module.exports = {
   selectAllUsers,
   selectUserById,
+  selectUserByEmail,
   insertUser,
   updateUser,
   deleteUser,
