@@ -3,7 +3,7 @@ const pool = require("../config/db");
 const selectAllUsers = async () => {
   const selectQuery = `SELECT * FROM users`;
   try {
-    const result = await pool(selectQuery);
+    const result = await pool.query(selectQuery);
     return result.rows;
   } catch (err) {
     console.error("Select all users model failed");
@@ -12,7 +12,7 @@ const selectAllUsers = async () => {
 };
 
 const selectUserById = async (userId) => {
-  const selectQuery = `SELECT id, name, email, role FROM USERS WHERE id = $1`;
+  const selectQuery = `SELECT id, name, role FROM USERS WHERE id = $1`;
   try {
     const result = await pool.query(selectQuery, [userId]);
     return result.rows[0];
@@ -22,8 +22,8 @@ const selectUserById = async (userId) => {
   }
 };
 
-const selectUserByEmail = async (userEmail) => {
-  const selectQuery = `SELECT id, name, email, role FROM USERS WHERE email = $1`;
+const selectUserByEmailForAuth = async (userEmail) => {
+  const selectQuery = `SELECT id, password FROM USERS WHERE email = $1`;
   try {
     const result = await pool.query(selectQuery, [userEmail]);
     return result.rows[0];
@@ -34,7 +34,7 @@ const selectUserByEmail = async (userEmail) => {
 };
 
 const insertUser = async (name, email, role, password) => {
-  const insertQuery = `INSERT users (name, email, role, password)
+  const insertQuery = `INSERT INTO users (name, email, role, password)
                       VALUES ($1, $2, $3, $4)
                       RETURNING id, name, email, role`;
   const client = await pool.connect();
@@ -99,7 +99,7 @@ const deleteUser = async (userId) => {
     await client.query("BEGIN");
     const result = await client.query(deleteQuery, [userId]);
     await client.query("COMMIT");
-    return result.rows[0];
+    return result.rowCount;
   } catch (err) {
     await client.query("ROLLBACK");
   } finally {
@@ -110,7 +110,7 @@ const deleteUser = async (userId) => {
 module.exports = {
   selectAllUsers,
   selectUserById,
-  selectUserByEmail,
+  selectUserByEmailForAuth,
   insertUser,
   updateUser,
   deleteUser,

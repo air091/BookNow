@@ -1,14 +1,26 @@
+require("dotenv/config");
 const bcrypt = require("bcrypt");
-const { insertUser, selectUserByEmail } = require("../models/user.model");
+const {
+  insertUser,
+  selectUserById,
+  selectUserByEmailForAuth,
+} = require("../models/user.model");
 const { generateToken } = require("../utils/generateToken");
+const { jwtVerify } = require("jose");
 
 const register = async (request, response) => {
   try {
-    const { name, email, role, password } = request.body;
+    const { name, email, role = "user", password } = request.body;
     if (!name || !email || !password)
       return response
         .status(400)
         .json({ status: false, message: "All fields are required" });
+
+    const checkUser = await selectUserByEmailForAuth(email);
+    if (checkUser)
+      return response
+        .status(400)
+        .json({ status: false, message: "Email already in use" });
 
     const salt = await bcrypt.genSalt(10);
     const hashPassword = await bcrypt.hash(password, salt);
@@ -30,7 +42,7 @@ const login = async (request, response) => {
         .status(400)
         .json({ status: false, message: "All fields are required" });
 
-    const user = await selectUserByEmail(email);
+    const user = await selectUserByEmailForAuth(email);
     if (!user)
       return response
         .status(404)
@@ -41,14 +53,31 @@ const login = async (request, response) => {
       return response
         .status(401)
         .json({ status: false, message: "Email or password is incorrect" });
+
     await generateToken(user.id, response);
     return response
       .status(200)
-      .json({ status: true, message: "User logged in successfully", user });
+      .json({ status: true, message: "User logged in successfully" });
   } catch (err) {
     console.log(`Register failed ${err}`);
     return response.status(500).json({ status: false, message: err.message });
   }
 };
 
-module.exports = { register, login };
+const logout = async (request, response) => {
+  try {
+    response.cookie("jwt", "", { httpOnly: true, expires: new Date(0) });
+    return response
+      .status(200)
+      .json({ status: true, message: "User logged out successfully" });
+  } catch (err) {
+    console.log(`Logout failed ${err}`);
+    return response.status(500).json({ status: false, message: err.message });
+  }
+};
+
+const me = async (request, response) => {
+  return response.status(200).json({ status: true, user: request.user });
+};
+
+module.exports = { register, login, logout, me };

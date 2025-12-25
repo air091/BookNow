@@ -1,9 +1,9 @@
-const { jwtVerify } = require("jose");
+const { SignJWT } = require("jose");
 const secret = new TextEncoder().encode(process.env.JWT_SECRET);
 
 const generateToken = async (userId, response) => {
-  const payload = { id: user };
-  const token = await jwtVerify(payload)
+  const payload = { id: userId };
+  const token = await new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime(process.env.JWT_EXPIRES_IN)
     .sign(secret);
